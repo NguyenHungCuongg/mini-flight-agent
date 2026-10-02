@@ -34,7 +34,7 @@ Bên phê duyệt kế hoạch hoặc hành động vượt hạn mức. Trong d
 Giới hạn cứng số lần gọi model của một lần chạy.
 
 **Phát hiện lặp**:
-Dừng khi cùng một cặp (tool, args) lặp lại trong vài vòng gần nhất.
+Dừng khi cùng một cặp (tool, args) lặp lại 3 lần trong 6 lời gọi tool gần nhất. Đọc lại booking để chờ xác nhận (polling) không tính là lặp.
 
 ### Mẫu thiết kế
 
