@@ -6,6 +6,7 @@ ref-docs/
 .claude/
 CLAUDE.md
 docs/
+.scratch/
 
 # Python
 __pycache__/
