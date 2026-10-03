@@ -1,12 +1,12 @@
 # Báo cáo thực hành BTVN#3: Agent đặt vé máy bay bằng LangChain
 
-|           |                                              |
-| --------- | -------------------------------------------- |
-| Môn học   | SE373: Kỹ thuật xây dựng hệ thống Agentic AI |
-| Họ và tên | `Nguyễn Hùng Cường`                          |
-| MSSV      | `23520201`                                   |
-| Lớp       | `SE373.R11`                                  |
-| Repo      | `<link GitHub>`                              |
+|           |                                                         |
+| --------- | ------------------------------------------------------- |
+| Môn học   | SE373: Kỹ thuật xây dựng hệ thống Agentic AI            |
+| Họ và tên | `Nguyễn Hùng Cường`                                     |
+| MSSV      | `23520201`                                              |
+| Lớp       | `SE373.R11`                                             |
+| Repo      | `https://github.com/NguyenHungCuongg/mini-flight-agent` |
 
 ## 1. Yêu cầu bài thực hành
 
