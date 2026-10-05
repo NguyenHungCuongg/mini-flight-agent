@@ -1,6 +1,6 @@
 """Run every pattern on every scenario with the real LLM and summarise the results.
 
-Each run is appended to results/runs.jsonl as soon as it ends, so the evaluation can be
+Every (pattern, scenario) pair is run 3 times (reps). Each run is appended to results/runs.jsonl as soon as it ends, so the evaluation can be
 resumed on another day: runs that already have a result (other than infra_error) are skipped.
 
 Run:  uv run python -m flight_agent.evaluate
@@ -51,16 +51,18 @@ def summary(records: dict) -> str:
     rows = [r for r in records.values() if r["outcome"] != "infra_error"]
     patterns = list(dict.fromkeys(r["pattern"] for r in records.values()))
     scenarios = list(dict.fromkeys(r["scenario"] for r in records.values()))
-    lines = ["## Outcome per scenario (✓ = outcome matches the expected one)", "",
+    lines = ["## Correct runs per scenario (✓ = every run matched the expected outcome; "
+             "in brackets: stop reasons of the wrong runs)", "",
              "| Scenario | Expected | " + " | ".join(patterns) + " |",
              "|---|---|" + "---|" * len(patterns)]
     for s in scenarios:
         cells = []
         for p in patterns:
-            rs = [r for r in records.values() if r["pattern"] == p and r["scenario"] == s]
-            mark = lambda r: "" if r["outcome"] == "infra_error" else ("✓ " if r["outcome"] == r["expected"] else "✗ ")
-            cells.append(", ".join(f"{mark(r)}{r['outcome']}"
-                                   f" ({r['stop_reason'] or '-'})" for r in rs) or "-")
+            rs = [r for r in rows if r["pattern"] == p and r["scenario"] == s]
+            wrong = [r for r in rs if r["outcome"] != r["expected"]]
+            reasons = ", ".join(sorted({r["stop_reason"] or r["outcome"] for r in wrong}))
+            cells.append(f"{'✗' if wrong else '✓'} {len(rs) - len(wrong)}/{len(rs)}"
+                         + (f" ({reasons})" if reasons else "") if rs else "-")
         lines.append(f"| {s} | {SCENARIOS[s].expected} | " + " | ".join(cells) + " |")
 
     lines += ["", "## Per pattern", "",
@@ -83,6 +85,6 @@ def summary(records: dict) -> str:
 
 if __name__ == "__main__":
     from flight_agent.model import make_model
-    records = evaluate(make_model)
+    records = evaluate(make_model, reps=3)
     (RESULTS / "summary.md").write_text(summary(records), encoding="utf-8")
     print(f"\nSummary written to {RESULTS / 'summary.md'}")

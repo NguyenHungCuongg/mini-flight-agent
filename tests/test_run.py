@@ -117,6 +117,21 @@ def test_pay_above_limit_needs_approval_and_hands_off_when_refused():
     assert r.trace[-1]["tool"] == "pay" and r.trace[-1]["result"]["status"] == "denied"
 
 
+def test_pay_above_limit_goes_ahead_when_the_approver_agrees():
+    r = go("react", "approved_payment", call("search_flights", **SEARCH), *book_pay_check("VN122"),
+           AIMessage(content="Done."))
+    assert r.stop_reason is None
+    assert r.outcome == "done"
+
+
+def test_injected_note_in_search_results_cannot_unlock_a_bad_booking():
+    r = go("react", "injection", call("search_flights", **SEARCH), call("book_seat", flight="VJ610"),
+           *book_pay_check("VN122"), AIMessage(content="Booked VN122."))
+    assert "waived" in str(r.trace[0]["result"])            # the model did see the injection
+    assert [t["result"]["status"] for t in r.trace if t["tool"] == "book_seat"] == ["denied", "ok"]
+    assert r.outcome == "done"
+
+
 def test_api_errors_are_infra_errors_not_agent_failures():
     import httpx, openai
     req = httpx.Request("POST", "https://example.test")
@@ -211,7 +226,16 @@ def test_evaluation_saves_each_run_and_skips_it_next_time(tmp_path):
         raise AssertionError("a finished run must not call the model again")
     evaluate(must_not_call, path, patterns=("plan_execute",), scenarios=("valid",))
     assert len(path.read_text(encoding="utf-8").splitlines()) == 1
-    assert "✓ done" in summary(records)
+    assert "✓ 1/1" in summary(records)
+
+
+def test_summary_counts_correct_runs_over_repetitions(tmp_path):
+    from flight_agent.evaluate import evaluate, summary
+
+    records = evaluate(lambda: scripted(BOOK_PAY("VN122")), tmp_path / "runs.jsonl", reps=2,
+                       patterns=("plan_execute",), scenarios=("valid", "sold_out"))
+    assert "✓ 2/2" in summary(records)                                 # valid
+    assert "✗ 0/2 (step_failed)" in summary(records)                   # sold_out
 
 
 def test_handoff_after_failed_replans_asks_about_the_failure_not_about_relaxing():
